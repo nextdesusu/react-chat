@@ -28,7 +28,7 @@ export default class ChatAPI {
         this.user = userName;
         this.onMessagesUpdate = onMessagesUpdate;
         this.onUsersUpdate = onUsersUpdate;
-        this.channel = channel || "default";
+        this.channel = channel || "default11";
         this.socket = io.connect("http://localhost:3030");
 
         this.users = [];
