@@ -4,9 +4,11 @@ type callbackFunction = (data: any) => void;
 
 interface socketData {
     nickname?: string;
+    socket?: string;
     messages?: Array<any>;
     message?: string;
     users?: Array<any>;
+    chatRoom?: string;
 }
 
 export interface ChatAPIArgs {
@@ -37,11 +39,13 @@ export default class ChatAPI {
 
     public start(): void {
         this.socket.on("connect", (): void => {
+            console.log("connection start");
             this.socket.emit("chat-start", { chatRoom: this.channel, nickname: this.user });
             this.socket.on("chat-new-user", (data: socketData) => {
                 this.users.push(data.nickname || "");
                 this.onUsersUpdate(this.users);
-            })
+                console.log("new-user", data.nickname);
+            });
             this.socket.on("chat-fetch-info", (data: socketData) => {
                 this.messages = data.messages || [];
                 this.users = data.users || [];
@@ -53,6 +57,9 @@ export default class ChatAPI {
                 this.messages.push(data.message);
                 this.onMessagesUpdate(this.messages);
                 console.log("chat-message", data.message);
+            });
+            this.socket.on("chat-user-disconnect", (data: socketData) => {
+                console.log("user:", data,"leave");
             });
         });
     }

@@ -2,6 +2,11 @@ import express, { Application } from "express";
 import socketIO, { Server as SocketIOServer } from "socket.io";
 import { createServer, Server as HTTPServer, Server } from "http";
 
+interface socketData {
+    nickname?: string;
+    chatRoom?: string;
+}
+
 interface userType {
     socket: string;
     nickname: string;
@@ -32,7 +37,7 @@ export default class ChatServer {
     private socketServer: SocketIOServer;
     private port: number;
     private rooms: roomsType;
-    private sockets: roomsBySocket;
+    private activeUsers: roomsBySocket;
 
     constructor(port: number) {
         this.app = express();
@@ -41,7 +46,7 @@ export default class ChatServer {
         this.port = port;
 
         this.rooms = {};
-        this.sockets = {};
+        this.activeUsers = {};
         this.handleSockets();
     }
 
@@ -56,22 +61,63 @@ export default class ChatServer {
         const room: chatRoom = this.getRoom(roomName);
         room.users.push(user);
 
-        this.sockets[user.socket] = roomName;
+        this.activeUsers[user.socket] = roomName;
+    }
+
+    private unassignUser(userSocket: string): void {
+        const room = this.getRoom(this.activeUsers[userSocket]);
+        room.users = room.users.filter(
+            (user: userType) => user.socket !== userSocket
+        );
+
+        delete this.activeUsers[userSocket];
     }
 
 
     private handleSockets(): void {
         this.socketServer.on("connect", (socketClient): void => {
             socketClient.on("chat-start", (data: any) => {
-                console.log("join:", socketClient.id)
-                const user: userType = {
-                    nickname: data.nickname,
+                const { chatRoom, nickname } = data;
+                socketClient.join(chatRoom);
+                socketClient.broadcast.to(chatRoom).emit("chat-new-user", { nickname });
+
+                const newUser: userType = {
+                    nickname,
                     socket: socketClient.id,
                 };
-                this.assignUser(data.chatRoom, user);
+                this.assignUser(chatRoom, newUser);
+
+                const { users, messages } = this.getRoom(chatRoom);
+                this.socketServer.to(socketClient.id).emit("chat-fetch-info", {
+                    messages,
+                    users
+                });
+            });
+            socketClient.on("chat-message", (data: any) => {
+                const { text, nickname, chatRoom } = data;
+                const message = {
+                    date: new Date(),
+                    text: text.trim(),
+                    author: nickname
+                };
+
+                const room = this.getRoom(chatRoom);
+                room.messages.push(message);
+
+                const response = {
+                    nickname,
+                    message
+                };
+                socketClient.broadcast.to(data.chatRoom).emit("chat-message", response);
+                this.socketServer.to(socketClient.id).emit("chat-message", response);
             });
             socketClient.on("disconnect", (): void => {
-                console.log(socketClient.id, "leaving:", this.sockets[socketClient.id]);
+                const roomName = this.activeUsers[socketClient.id];
+                const leavingUser: userType | undefined = this.getRoom(roomName).users.find(
+                    (user: userType) => user.socket === socketClient.id
+                );
+                this.unassignUser(socketClient.id);
+                this.socketServer.to(roomName).emit("chat-user-disconnect", leavingUser);
             })
         });
     }
