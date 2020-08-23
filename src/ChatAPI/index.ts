@@ -1,31 +1,30 @@
 import io from 'socket.io-client';
 
-type callbackFunction = (data: any) => void;
+import { ChatMessage, ChatUser, ChatAPIArgs, ChatAPICallbackFunction } from "./types";
+
+const errorMessage: ChatMessage = {
+    date: new Date(),
+    text: "error",
+    author: "error"
+};
 
 interface socketData {
     nickname?: string;
     socket?: string;
-    messages?: Array<any>;
-    message?: string;
-    users?: Array<any>;
+    messages?: Array<ChatMessage>;
+    message?: ChatMessage;
+    users?: Array<ChatUser>;
     chatRoom?: string;
 }
 
-export interface ChatAPIArgs {
-    userName: string;
-    onMessagesUpdate: callbackFunction;
-    onUsersUpdate: callbackFunction;
-    channel?: string;
-};
-
 export default class ChatAPI {
-    private socket: any;
+    private socket: SocketIOClient.Socket;
     private channel: string;
     private user: string;
-    private users: Array<string>;
-    private messages: Array<any>;
-    private onMessagesUpdate: callbackFunction;
-    private onUsersUpdate: callbackFunction;
+    private users: Array<ChatUser>;
+    private messages: Array<ChatMessage>;
+    private onMessagesUpdate: ChatAPICallbackFunction;
+    private onUsersUpdate: ChatAPICallbackFunction;
     constructor({ userName, onMessagesUpdate, onUsersUpdate, channel }: ChatAPIArgs) {
         this.user = userName;
         this.onMessagesUpdate = onMessagesUpdate;
@@ -42,7 +41,7 @@ export default class ChatAPI {
             console.log("connection start");
             this.socket.emit("chat-start", { chatRoom: this.channel, nickname: this.user });
             this.socket.on("chat-new-user", (data: socketData) => {
-                this.users.push(data.nickname || "");
+                this.users.push({ nickname: data.nickname || "error", socket: data.socket || "error" });
                 this.onUsersUpdate(this.users);
                 console.log("new-user", data.nickname);
             });
@@ -54,12 +53,12 @@ export default class ChatAPI {
                 console.log("chat-fetch-info", data);
             });
             this.socket.on("chat-message", (data: socketData) => {
-                this.messages.push(data.message);
+                this.messages.push(data.message || errorMessage);
                 this.onMessagesUpdate(this.messages);
                 console.log("chat-message", data.message);
             });
             this.socket.on("chat-user-disconnect", (data: socketData) => {
-                console.log("user:", data,"leave");
+                console.log("user:", data, "leave");
             });
         });
     }

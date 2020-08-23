@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 interface SendMessageProps {
-  onSendMessage?: (message: any) => void;
+  onSendMessage: (message: any) => void;
 }
 
 export default function SendMessage({ onSendMessage }: SendMessageProps) {
@@ -10,7 +10,7 @@ export default function SendMessage({ onSendMessage }: SendMessageProps) {
   return (
     <div>
       <textarea onInput={getTextInput}></textarea>
-      <button onClick={() => onSendMessage? onSendMessage(messageText): null}>send message</button>
+      <button onClick={() => onSendMessage(messageText)}>send message</button>
     </div>
   );
 }

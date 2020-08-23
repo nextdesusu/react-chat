@@ -8,7 +8,7 @@ function App() {
 
   return (
     <div>
-      <Chat userName={`USER:${Math.random().toString(16)}`}/>
+      <Chat channel="11111" userName={`USER:${Math.random().toString(16)}`}/>
     </div>
   );
 }
