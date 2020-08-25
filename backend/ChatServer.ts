@@ -79,12 +79,12 @@ export default class ChatServer {
             socketClient.on("chat-start", (data: any) => {
                 const { chatRoom, nickname } = data;
                 socketClient.join(chatRoom);
-                socketClient.broadcast.to(chatRoom).emit("chat-new-user", { nickname });
 
                 const newUser: userType = {
                     nickname,
                     socket: socketClient.id,
                 };
+                socketClient.broadcast.to(chatRoom).emit("chat-new-user", { user: newUser });
                 this.assignUser(chatRoom, newUser);
 
                 const { users, messages } = this.getRoom(chatRoom);

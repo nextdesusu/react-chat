@@ -8,13 +8,18 @@ const errorMessage: ChatMessage = {
     author: "error"
 };
 
+const errorUser: ChatUser = {
+    nickname: "error",
+    socket: "error"
+}
+
 interface socketData {
-    nickname?: string;
-    socket?: string;
+    user?: ChatUser;
     messages?: Array<ChatMessage>;
     message?: ChatMessage;
     users?: Array<ChatUser>;
     chatRoom?: string;
+    nickname?: string;
 }
 
 export default class ChatAPI {
@@ -29,7 +34,7 @@ export default class ChatAPI {
         this.user = userName;
         this.onMessagesUpdate = onMessagesUpdate;
         this.onUsersUpdate = onUsersUpdate;
-        this.channel = channel || "default11";
+        this.channel = channel || "default";
         this.socket = io.connect("http://localhost:3030");
 
         this.users = [];
@@ -41,9 +46,9 @@ export default class ChatAPI {
             console.log("connection start");
             this.socket.emit("chat-start", { chatRoom: this.channel, nickname: this.user });
             this.socket.on("chat-new-user", (data: socketData) => {
-                this.users.push({ nickname: data.nickname || "error", socket: data.socket || "error" });
+                this.users.push(data.user || errorUser);
                 this.onUsersUpdate(this.users);
-                console.log("new-user", data.nickname);
+                console.log("new-user", data.user);
             });
             this.socket.on("chat-fetch-info", (data: socketData) => {
                 this.messages = data.messages || [];
@@ -58,7 +63,8 @@ export default class ChatAPI {
                 console.log("chat-message", data.message);
             });
             this.socket.on("chat-user-disconnect", (data: socketData) => {
-                console.log("user:", data, "leave");
+                this.users = this.users.filter((user: ChatUser) => user.nickname !== data.nickname);
+                this.onUsersUpdate(this.users);
             });
         });
     }

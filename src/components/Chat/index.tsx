@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, Reducer } from "react";
+import React, { useEffect, useReducer, useRef, Reducer } from "react";
 
 import UserList from "../UserList";
 import SendMessage from "../SendMessage";
@@ -7,7 +7,7 @@ import MessageList from "../MessageList";
 import ChatAPI from "../../ChatAPI";
 import { ChatAPIArgs, ChatMessage, ChatUser } from "../../ChatAPI/types";
 
-import "./style.css";
+import "./Chat.css";
 
 interface ChatProps {
   userName: string;
@@ -17,19 +17,16 @@ interface ChatProps {
 interface ChatStore {
   messages: Array<ChatMessage>;
   users: Array<ChatUser>;
-  chatConnection: ChatAPI | null;
 }
 
 const initialStore: ChatStore = {
   messages: [],
   users: [],
-  chatConnection: null,
 };
 
 type Action =
   | { type: "new-users"; payload: Array<ChatUser> }
-  | { type: "new-messages"; payload: Array<ChatMessage> }
-  | { type: "new-chat-connection"; payload: ChatAPI };
+  | { type: "new-messages"; payload: Array<ChatMessage> };
 
 type ChatReducer = Reducer<ChatStore, Action>;
 
@@ -40,12 +37,12 @@ export default function Chat({ userName, channel }: ChatProps) {
         return { ...store, messages: action.payload };
       case "new-users":
         return { ...store, users: action.payload };
-      case "new-chat-connection":
-        return { ...store, chatConnection: action.payload };
       default:
         return store;
     }
   }, initialStore);
+
+  const chatAPIConnection = useRef<ChatAPI | null>(null);
 
   useEffect(() => {
     const setMessages = (messages: Array<ChatMessage>) =>
@@ -62,14 +59,14 @@ export default function Chat({ userName, channel }: ChatProps) {
 
     const chatConnection = new ChatAPI(args);
     chatConnection.start();
-    dispatch({ type: "new-chat-connection", payload: chatConnection });
+    chatAPIConnection.current = chatConnection;
   }, []);
-  const { messages, users, chatConnection } = store;
+  const { messages, users } = store;
   const sendMessage = (text: string) => {
     const trimmed: string = text.trim();
     if (trimmed === "") return;
-    if (chatConnection) {
-      chatConnection.sendMessage(trimmed);
+    if (chatAPIConnection.current !== null) {
+      chatAPIConnection.current.sendMessage(trimmed);
     } else {
       throw Error("Connection failed!");
     }
