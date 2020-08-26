@@ -73,8 +73,10 @@ export default function Chat({ userName, channel }: ChatProps) {
   };
   return (
     <div className="chat-container">
-      <UserList users={users} />
-      <MessageList messages={messages} />
+      <div className="chat-grid-2">
+        <UserList users={users} />
+        <MessageList messages={messages} />
+      </div>
       <SendMessage onSendMessage={sendMessage} />
     </div>
   );

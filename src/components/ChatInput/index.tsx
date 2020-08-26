@@ -25,7 +25,7 @@ export default function ChatInput({
         />
         {label}
       </label>
-      <span className="chat_input-error_field">{errorField}</span>
+      <p className="chat_input-error_field">{errorField}</p>
     </div>
   );
 }

@@ -1,11 +1,14 @@
 .user_list-container {
-    background-color: gray;
+    border-right: 1px solid black;
+    padding: 0.3em;
+    font-size: 0.7em;
+    text-align: center;
 }
 
 .user-list-ul {
-    background-color: green;
+    
 }
 
 .user_list-item {
-    background-color: red;
+    
 }

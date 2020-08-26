@@ -1,7 +1,12 @@
 .send_message-container {
-
+    display: grid;
+    grid-template-columns: 80% 20%;
+    border-top: 1px solid black;
 }
 
 .send_message-textarea {
-    
+    border: none;
+    resize: none;
+    height: 97%;
+    padding: .3em;
 }

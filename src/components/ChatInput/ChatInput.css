@@ -1,5 +1,6 @@
 .chat_input-container {
-
+    display: grid;
+    grid-template-rows: 80% 20%;
 }
 
 .chat_input-input {

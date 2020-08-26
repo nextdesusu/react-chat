@@ -7,14 +7,14 @@ export type vfType = (arg: string) => validationResult
 
 export function validateUserName(userName: string): validationResult {
     return {
-        isValid: userName.length > 0,
-        error: "",
+        isValid: userName.length > 3,
+        error: "User name have to be at least 4 characters",
     }
 }
 
 export function validateChannel(channel: string): validationResult {
     return {
-        isValid: channel.length > 0,
-        error: "",
+        isValid: channel.length > 3,
+        error: "Channel should have at least 4 characters",
     }
 }

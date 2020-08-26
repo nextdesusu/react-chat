@@ -13,7 +13,7 @@ export default function SendMessage({ onSendMessage }: SendMessageProps) {
   const getTextInput = (event: any) => setMessageText(event.target.value);
   return (
     <div className="send_message-container">
-      <textarea className="send_message-textarea" onChange={getTextInput} value={messageText}></textarea>
+      <textarea placeholder="Type something..." className="send_message-textarea" onChange={getTextInput} value={messageText}></textarea>
       <ChatButton
         onClick={() => {
           onSendMessage(messageText);

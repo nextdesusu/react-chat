@@ -18,8 +18,8 @@ interface AppStore {
   channel: string;
   userName: string;
   shouldProceed: boolean;
-  userNameError?: string;
-  channelError?: string;
+  errorUserName: string;
+  errorChannel: string;
 }
 
 type cbType = (value: string) => void;
@@ -27,7 +27,9 @@ type cbType = (value: string) => void;
 type Action =
   | { type: "set-channel"; payload: string }
   | { type: "set-user-name"; payload: string }
-  | { type: "proceed"; payload: true };
+  | { type: "proceed"; payload: true }
+  | { type: "error-channel"; payload: string }
+  | { type: "error-user-name"; payload: string };
 
 type ChatReducer = Reducer<AppStore, Action>;
 
@@ -35,6 +37,8 @@ const initialStore: AppStore = {
   channel: "",
   userName: "",
   shouldProceed: false,
+  errorUserName: "Type user name",
+  errorChannel: "Type channel name",
 };
 
 function App() {
@@ -47,6 +51,10 @@ function App() {
           return { ...store, userName: action.payload };
         case "proceed":
           return { ...store, shouldProceed: action.payload };
+        case "error-channel":
+          return { ...store, errorChannel: action.payload };
+        case "error-user-name":
+          return { ...store, errorUserName: action.payload };
         default:
           return store;
       }
@@ -54,33 +62,60 @@ function App() {
     initialStore
   );
 
-  const inputHandler = (cb: cbType) => (
-    event: React.FormEvent<HTMLInputElement>
-  ) => cb((event.target as HTMLInputElement).value);
-
-  const setChannel = (channel: string) => {
-    const vs: validationResult = validateChannel(channel);
-    if (vs.error) {
-
+  const inputHandler = (
+    onInput: cbType,
+    onError: cbType,
+    validationFunc: vfType
+  ) => (event: React.FormEvent<HTMLInputElement>) => {
+    const input: string = (event.target as HTMLInputElement).value;
+    const result: validationResult = validationFunc(input);
+    if (!result.isValid) {
+      onError(result.error || "");
     } else {
-      dispatch({ type: "set-channel", payload: channel });
+      onError("");
     }
+    onInput(input);
   };
-  const setUserName = (userName: string) =>
-    dispatch({ type: "set-user-name", payload: userName });
 
-  const { userName, channel, shouldProceed } = store;
+  const createDispatcher = (type: any) => (payload: string) =>
+    dispatch({ type, payload });
+  const setChannel = createDispatcher("set-channel");
+  const setUserName = createDispatcher("set-user-name");
+  const onSetChannelError = createDispatcher("error-channel");
+  const onSetUserError = createDispatcher("error-user-name");
+
+  const {
+    userName,
+    channel,
+    shouldProceed,
+    errorUserName,
+    errorChannel,
+  } = store;
 
   return (
     <section className="app-container">
       {!shouldProceed ? (
         <PopupMenu subClass={"grid-template-3"}>
-          <ChatInput onInput={inputHandler(setChannel)} placeholder="channel" />
           <ChatInput
-            onInput={inputHandler(setUserName)}
+            onInput={inputHandler(
+              setChannel,
+              onSetChannelError,
+              validateChannel
+            )}
+            placeholder="channel"
+            errorField={errorChannel}
+          />
+          <ChatInput
+            onInput={inputHandler(
+              setUserName,
+              onSetUserError,
+              validateUserName
+            )}
             placeholder="user name"
+            errorField={errorUserName}
           />
           <ChatButton
+            disabled={Boolean(errorChannel.length || errorUserName.length)}
             onClick={() => dispatch({ type: "proceed", payload: true })}
           >
             Proceed
